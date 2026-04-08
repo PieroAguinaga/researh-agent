@@ -1,0 +1,59 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "iata"
+version = "0.1.0"
+description = "Intelligent Agent for Technology Acquisition — AI-powered scientific research assistant"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+
+dependencies = [
+    # LangChain / LangGraph core
+    "langchain>=0.2.16",
+    "langchain-openai>=0.1.25",
+    "langchain-community>=0.2.16",
+    "langgraph>=0.2.0",
+
+    # Supabase
+    "supabase>=2.7.0",
+
+    # Paper APIs
+    "arxiv>=2.1.3",
+    "httpx>=0.27.0",
+
+    # Web framework
+    "flask>=3.0.3",
+    "flask-cors>=4.0.1",
+
+    # Config & utilities
+    "pydantic>=2.8.0",
+    "pydantic-settings>=2.4.0",
+    "python-dotenv>=1.0.1",
+    "tenacity>=8.5.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.23.0",
+    "ruff>=0.5.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["agent*", "api*", "config*"]
+exclude = ["tests*"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
