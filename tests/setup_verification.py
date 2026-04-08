@@ -74,6 +74,13 @@ def verify_supabase_tables():
 
 
 
+def verify_arxiv():
+    """Run a minimal arXiv search to confirm the API is reachable."""
+    from agent.tools.search_tool import _fetch_arxiv
+    papers = _fetch_arxiv("transformer", max_results=1)
+    assert len(papers) > 0, "arXiv returned no results"
+
+
 def main():
     print("\n── IATA Setup Verification ──────────────────────────────\n")
 
@@ -82,7 +89,9 @@ def main():
         ("Azure OpenAI connection", verify_azure),
         ("Supabase connection",     verify_supabase_connection),
         ("Supabase tables exist",   verify_supabase_tables),
+        ("arXiv API reachable",     verify_arxiv),
     ]
+
 
     results = [check(label, fn) for label, fn in checks]
     passed  = sum(results)

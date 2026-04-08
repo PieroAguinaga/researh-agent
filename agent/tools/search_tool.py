@@ -60,7 +60,7 @@ def _fetch_arxiv(query: str, max_results: int) -> list[Paper]:
         query:       Search string — keywords, arXiv categories, or author names.
         max_results: Maximum number of papers to return.
     """
-    client = arxiv.Client(num_retries=3, delay_seconds=2)
+    client = arxiv.Client(num_retries=3, delay_seconds=4)
     search = arxiv.Search(
         query=query,
         max_results=max_results,
