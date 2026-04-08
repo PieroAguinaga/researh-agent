@@ -35,6 +35,12 @@ def create_app() -> Flask:
         format="%(asctime)s [%(levelname)s] %(name)s — %(message)s",
     )
 
+    # Register blueprints
+    from api.routes.chat import chat_bp
+    from api.routes.papers import papers_bp
+
+    app.register_blueprint(chat_bp, url_prefix="/api")
+    app.register_blueprint(papers_bp, url_prefix="/api")
 
     @app.get("/health")
     def health():
