@@ -1,3 +1,5 @@
 .vscode
 .python-version
 .venv
+iata.egg-info
+uv.lock
