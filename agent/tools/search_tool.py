@@ -11,8 +11,10 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any
 
-import arxiv
+import requests
+import feedparser
 import httpx
+from tenacity import retry, stop_after_attempt, wait_exponential
 from langchain_core.tools import tool
 
 logger = logging.getLogger(__name__)
@@ -54,31 +56,55 @@ class Paper:
 
 def _fetch_arxiv(query: str, max_results: int) -> list[Paper]:
     """
-    Fetch papers from arXiv using the official Python client (synchronous).
+    Fetch papers from arXiv using the REST API + feedparser (synchronous).
 
     Args:
         query:       Search string — keywords, arXiv categories, or author names.
         max_results: Maximum number of papers to return.
     """
-    client = arxiv.Client(num_retries=3, delay_seconds=4)
-    search = arxiv.Search(
-        query=query,
-        max_results=max_results,
-        sort_by=arxiv.SortCriterion.SubmittedDate,
+
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=4, max=30),
+        reraise=True,
     )
+    def _get_with_retry(url: str, params: dict) -> requests.Response:
+        response = requests.get(url, params=params, timeout=30)
+        if response.status_code == 429:
+            raise requests.exceptions.HTTPError("HTTP 429 – rate limited by arXiv")
+        response.raise_for_status()
+        return response
+
+    BASE_URL = "http://export.arxiv.org/api/query"
+    params = {
+        "search_query": query,
+        "start":        0,
+        "max_results":  max_results,
+        "sortBy":       "submittedDate",
+        "sortOrder":    "descending",
+    }
+
+    response = _get_with_retry(BASE_URL, params)
+
+    feed = feedparser.parse(response.text)
 
     papers: list[Paper] = []
-    for result in client.results(search):
+    for entry in feed.entries:
+        # Busca el link al PDF entre los links del entry
+        pdf_url = next(
+            (lk.href for lk in entry.get("links", []) if lk.get("type") == "application/pdf"),
+            "",
+        )
         papers.append(Paper(
-            paper_id=result.entry_id,
-            title=result.title.strip(),
-            authors=[a.name for a in result.authors],
-            abstract=result.summary.strip(),
-            url=result.entry_id,
-            published=result.published.date().isoformat(),
-            source="arxiv",
-            categories=result.categories,
-            pdf_url=result.pdf_url or "",
+            paper_id   = str(entry.id),
+            title      = entry.title.strip(),
+            authors    = [a.name for a in entry.get("authors", [])],
+            abstract   = entry.summary.strip(),
+            url        = str(entry.id),
+            published  = entry.published[:10],   # "YYYY-MM-DD"
+            source     = "arxiv",
+            categories = [t.get("term", "") for t in entry.get("tags", [])],
+            pdf_url    = pdf_url,
         ))
 
     logger.info("arXiv → %d papers for query: '%s'", len(papers), query)
