@@ -1,3 +1,11 @@
+"""
+Supervisor node for the IATA agent graph.
+
+Reads the conversation history and uses an LLM with structured output
+to decide which specialist agent to invoke next (search_agent or
+summarizer_agent), or to end the turn (FINISH).
+"""
+
 import logging
 from typing import Any, Literal
 
