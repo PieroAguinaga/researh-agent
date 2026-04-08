@@ -34,7 +34,7 @@ create table if not exists papers (
     abstract        text        default '',
     url             text        default '',
     pdf_url         text        default '',
-    published       date        default '',         -- ISO date string "2024-03-15"
+    published       date,                           -- ISO date string "2024-03-15"
     source          text        not null            -- 'arxiv' | 'semantic_scholar'
                                 check (source in ('arxiv', 'semantic_scholar')),
     categories      text[]      default '{}',
@@ -49,14 +49,14 @@ create index if not exists idx_papers_published on papers (published desc);
 -- -----------------------------------------------------------------------------
 -- 3. paper_embeddings
 --    Vector store for RAG — one row per paper, embedding of title + abstract.
---    Dimension 1536 matches text-embedding-ada-002.
+--    Dimension 1536 matches text-embedding-3-small.
 -- -----------------------------------------------------------------------------
 create table if not exists paper_embeddings (
     id          uuid    primary key default uuid_generate_v4(),
     paper_id    text    not null references papers(paper_id) on delete cascade,
     content     text    not null,                   -- text that was embedded
     metadata    jsonb   default '{}'::jsonb,
-    embedding   vector(1536)                        -- text-embedding-ada-002 output
+    embedding   vector(1536)                        -- text-embedding-3-small output
 );
 
 -- IVFFlat index — fast approximate nearest-neighbour search (cosine distance)
