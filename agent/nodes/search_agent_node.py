@@ -27,7 +27,6 @@ def search_agent_node(state: AgentState) -> dict[str, Any]:
     Specialist node that calls search_papers and stores results in state.
     """
     llm = get_llm(temperature=0)
-    # Forma moderna: llm ya sabe invocar tools directamente
     agent = create_react_agent(llm, tools=[search_papers])
 
     messages = [SystemMessage(content=SEARCH_AGENT_SYSTEM)] + state["messages"]
