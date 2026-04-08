@@ -5,3 +5,4 @@ iata.egg-info
 uv.lock
 .env
 __pycache__
+.claude
